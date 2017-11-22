@@ -21,40 +21,47 @@ typedef struct		s_terminal
 	char			line_buff[4096];
 }					t_terminal;
 
-int		constructor(t_terminal *all)
+typedef struct		s_input
+{
+	char			char_buff[5];
+	char			line_buff[4096];
+}					t_input;
+
+int		constructor(t_terminal *config)
 {
 	if ((tgetent(NULL, getenv("TERM")) < 1))
 		return (0);
-	if ((all->name == getenv("xterm-256color")) == 0)
+	if ((config->name == getenv("xterm-256color")) == 0)
 		ft_dprintf(2, "Opps, problem with terminal name\n");
-	tcgetattr(0, &all->term);
-	all->term.c_lflag &= ~(ICANON | ECHO);
-	all->term.c_cc[VMIN] = 1;
-	all->term.c_cc[VTIME] = 0;
-	tcsetattr(0, TCSANOW, &all->term);
+	tcgetattr(0, &config->term);
+	config->term.c_lflag &= ~(ICANON | ECHO);
+	config->term.c_cc[VMIN] = 1;
+	config->term.c_cc[VTIME] = 0;
+	tcsetattr(0, TCSANOW, &config->term);
 	return (1);
 }
 
-void	build_line(t_terminal *all)
+void	build_line(t_input *data)
 {
-	ft_printf("inside build_line: %c\n", all->char_buff[0]);
-	strcat(all->line_buff, all->char_buff);
-	ft_printf("Voila, your line: %s\n", all->line_buff);
+	ft_printf("inside build_line: %c\n", data->char_buff[0]);
+	strcat(data->line_buff, data->char_buff);
+	ft_printf("Voila, your line: %s\n", data->line_buff);
 }
 
 int		main(void)
 {
-	t_terminal	all;
+	t_terminal	config;
+	t_input		data;
 
-	if (!(constructor(&all)))
+	if (!(constructor(&config)))
 		return (0);
-	while ((read(0, &all.char_buff, 5)) && all.char_buff[0] != 10)
+	while ((read(0, &data.char_buff, 5)) && data.char_buff[0] != 10)
 	{
-		ft_printf("You just entered: %c\n", all.char_buff[0]);
-		if (all.char_buff[0] == '\E')
+		ft_printf("You just entered: %c\n", data.char_buff[0]);
+		if (data.char_buff[0] == '\E')
 			break;
-		if (ft_isprint(all.char_buff[0]))
-			build_line(&all);
+		if (ft_isprint(data.char_buff[0]))
+			build_line(&data);
 	}
 	return (0);
 }
