@@ -27,10 +27,10 @@ int		constructor(t_terminal *all)
 	if ((all->name == getenv("xterm-256color")) == 0)
 		ft_dprintf(2, "Opps, problem with terminal name\n");
 	tcgetattr(0, &all->term);
-	all->term.c_lflag &= ~(ICANON);
-	all->term.c_lflag &= ~(ECHO);
+	all->term.c_lflag &= ~(ICANON | ECHO);
 	all->term.c_cc[VMIN] = 1;
 	all->term.c_cc[VTIME] = 0;
+	tcsetattr(0, TCSANOW, &all->term);
 	return (1);
 }
 
