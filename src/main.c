@@ -17,7 +17,7 @@ typedef struct		s_terminal
 	struct termios	term;
 	struct winsize	sz;
 	char			*name;
-	char			*line;	
+	char			line_buff[5];
 }					t_terminal;
 
 int		constructor(t_terminal *all)
@@ -40,16 +40,11 @@ int		main(void)
 
 	if (!(constructor(&all)))
 		return (0);
-	while (1)
+	while ((read(0, &all.line_buff, 5)) && all.line_buff[0] != 10)
 	{
-		if ((get_next_line(0, (char**)&all.line)) > 0)
-		{
-			ft_printf("Your line is: %s\n", all.line);
-			if (ft_strcmp(all.line, "exit") == 0)
-				break ;
-			free(all.line);
-		}
+		ft_printf("You just entered: %c\n", all.line_buff[0]);
+		if (all.line_buff[0] == '\E')
+			break;
 	}
-	free(all.line);
 	return (0);
 }
