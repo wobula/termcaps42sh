@@ -17,10 +17,11 @@ LIBFT = ./libft/libftprintf.a
 LIBFTHEAD = -I ./libft/includes/
 
 GCC = gcc
-HEADERS = -I ./includes/ $(LIBFTHEAD)
+HEADERS = -I ./includes/
 FLAGS += -Wall -Wextra -Werror
+LFLAGS = -ltermcap $(LIBFTHEAD) $(LIBFT) $(HEADERS)
 
-COMPILE = $(GCC) $(FLAGS) $(SRC) $(HEADERS) $(LIBFT) -o $(NAME) -g
+COMPILE = $(GCC) $(FLAGS) $(SRC) $(LFLAGS) -o $(NAME) -g
 
 OUTPUTBUILD = echo "\033[32mBuilding TERM\033[0m"
 OUTPUTCLEAN = echo "\033[31mRemoving Objects\033[0m"

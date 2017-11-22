@@ -20,8 +20,10 @@ typedef struct		s_terminal
 	char			*line;	
 }					t_terminal;
 
-void	constructor(t_terminal *all)
+int		constructor(t_terminal *all)
 {
+	if ((tgetent(NULL, getenv("TERM")) < 1))
+		return (0);
 	if ((all->name == getenv("xterm-256color")) == 0)
 		ft_dprintf(2, "Opps, problem with terminal name\n");
 	tcgetattr(0, &all->term);
@@ -29,13 +31,15 @@ void	constructor(t_terminal *all)
 	all->term.c_lflag &= ~(ECHO);
 	all->term.c_cc[VMIN] = 1;
 	all->term.c_cc[VTIME] = 0;
+	return (1);
 }
 
 int		main(void)
 {
 	t_terminal	all;
 
-	constructor(&all);
+	if (!(constructor(&all)))
+		return (0);
 	while (1)
 	{
 		if ((get_next_line(0, (char**)&all.line)) > 0)
