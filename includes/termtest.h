@@ -17,12 +17,4 @@
 # include <termios.h>
 # include "../libft/includes/libft.h"
 
-typedef struct		s_terminal
-{
-	struct termios	term;
-	struct winsize	sz;
-	char			*name;
-	char			line[4096];	
-}					t_terminal;
-
 #endif

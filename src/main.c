@@ -12,6 +12,14 @@
 
 #include "../includes/termtest.h"
 
+typedef struct		s_terminal
+{
+	struct termios	term;
+	struct winsize	sz;
+	char			*name;
+	char			*line;	
+}					t_terminal;
+
 void	constructor(t_terminal *all)
 {
 	if ((all->name == getenv("xterm-256color")) == 0)
