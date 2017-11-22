@@ -21,8 +21,11 @@ int		main(void)
 		if ((get_next_line(0, &line)) > 0)
 		{
 			ft_printf("Your line is: %s\n", line);
+			if (ft_strcmp(line, "exit") == 0)
+				break ;
 			free(line);
 		}
 	}
+	free(line);
 	return (0);
 }
