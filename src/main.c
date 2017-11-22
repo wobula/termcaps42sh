@@ -14,6 +14,15 @@
 
 int		main(void)
 {
-	ft_printf("What is a supdog?\n");
+	char	*line;
+
+	while (1)
+	{
+		if ((get_next_line(0, &line)) > 0)
+		{
+			ft_printf("Your line is: %s\n", line);
+			free(line);
+		}
+	}
 	return (0);
 }
