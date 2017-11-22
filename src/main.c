@@ -10,22 +10,34 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../includes/term.h"
+#include "../includes/termtest.h"
+
+void	constructor(t_terminal *all)
+{
+	if ((all->name == getenv("xterm-256color")) == 0)
+		ft_dprintf(2, "Opps, problem with terminal name\n");
+	tcgetattr(0, &all->term);
+	all->term.c_lflag &= ~(ICANON);
+	all->term.c_lflag &= ~(ECHO);
+	all->term.c_cc[VMIN] = 1;
+	all->term.c_cc[VTIME] = 0;
+}
 
 int		main(void)
 {
-	char	*line;
+	t_terminal	all;
 
+	constructor(&all);
 	while (1)
 	{
-		if ((get_next_line(0, &line)) > 0)
+		if ((get_next_line(0, (char**)&all.line)) > 0)
 		{
-			ft_printf("Your line is: %s\n", line);
-			if (ft_strcmp(line, "exit") == 0)
+			ft_printf("Your line is: %s\n", all.line);
+			if (ft_strcmp(all.line, "exit") == 0)
 				break ;
-			free(line);
+			free(all.line);
 		}
 	}
-	free(line);
+	free(all.line);
 	return (0);
 }

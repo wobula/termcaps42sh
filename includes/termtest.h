@@ -1,7 +1,7 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   malloc.h                                           :+:      :+:    :+:   */
+/*   termtest.h                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: rschramm <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
@@ -10,10 +10,19 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef TERM_H
-# define TERM_H
+#ifndef TERMTEST_H
+# define TERMTEST_H
 
 # include <term.h>
+# include <termios.h>
 # include "../libft/includes/libft.h"
+
+typedef struct		s_terminal
+{
+	struct termios	term;
+	struct winsize	sz;
+	char			*name;
+	char			line[4096];	
+}					t_terminal;
 
 #endif
