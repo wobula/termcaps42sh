@@ -11,7 +11,6 @@
 /* ************************************************************************** */
 
 #include "../includes/termtest.h"
-#include <time.h>
 
 #define LINE_BUFF_SIZE 4096
 #define CHAR_BUFF_SIZE 5
@@ -25,6 +24,8 @@
 #define MOVERIGHT "nd"
 #define MOVELEFT "le"
 #define MOVEHOME "rc"
+#define LINEUP "up"
+#define LINESTART "cr"
 
 typedef struct		s_terminal
 {
@@ -33,8 +34,8 @@ typedef struct		s_terminal
 	char			*name;
 	char			char_buff[CHAR_BUFF_SIZE];
 	char			line_buff[LINE_BUFF_SIZE];
-	int				width;
-	int				height;
+	size_t			width;
+	size_t			height;
 }					t_terminal;
 
 typedef struct		s_input
@@ -42,14 +43,25 @@ typedef struct		s_input
 	char			char_buff[5];
 	char			line_buff[4096];
 	size_t			line_size;
+	size_t			cursor_pos;
 	size_t			cursor_col;
 	size_t			cursor_row;
+	size_t			end_col;
+	size_t			end_row;
 }					t_input;
 
 int		ft_intputchar(int c)
 {
 	write(1, &c, 1);
 	return (1);
+}
+
+void	second_tputs(char *cmd)
+{
+	int (*to_function)(int);
+
+	to_function = ft_intputchar;
+	tputs(cmd, 1, to_function);
 }
 
 void	my_tputs(char *cmd)
@@ -65,15 +77,21 @@ void	build_line(t_input *data)
 	strcat(data->line_buff, data->char_buff);
 	ft_printf("%c", data->char_buff[0]);
 	data->line_size++;
-	data->cursor_col++;
+	data->cursor_pos++;
 }
 
-void	second_tputs(char *cmd)
+void	move_home(t_input *data)
 {
-	int (*to_function)(int);
-
-	to_function = ft_intputchar;
-	tputs(cmd, 1, to_function);
+	while (data->cursor_row > 0)
+	{
+		my_tputs(LINEUP);
+		data->cursor_row--;
+	}
+	while (data->cursor_col > 0)
+	{
+		my_tputs(MOVELEFT);
+		data->cursor_col--;
+	}
 }
 
 void	move_cursor(t_input *data)
@@ -81,17 +99,17 @@ void	move_cursor(t_input *data)
 	if (data->char_buff[2] == RIGHT && data->cursor_col < data->line_size)
 	{
 		my_tputs(MOVERIGHT);
-		data->cursor_col++;
+		data->cursor_pos++;
 	}
 	else if (data->char_buff[2] == LEFT && data->cursor_col > 0)
 	{
 		my_tputs(MOVELEFT);
-		data->cursor_col--;
+		data->cursor_pos--;
 	}
 	else if (data->char_buff[2] == HOME)
 	{
-		my_tputs(MOVEHOME);
-		data->cursor_col = 0;
+		move_home(data);
+		data->cursor_pos = 0;
 	}
 	else if (data->char_buff[2] == END)
 	{
@@ -99,33 +117,8 @@ void	move_cursor(t_input *data)
 		//tgoto(tgetstr("cm", NULL), data->line_size, 20);
 		second_tputs(tgoto(tgetstr("cm", NULL), data->line_size, 20));
 		//my_tputs(tgoto(tgetstr("cm", NULL), 20, 50));
-		data->cursor_col = data->line_size;
+		data->cursor_pos = data->line_size;
 	}
-}
-
-void	get_cursor_pos(t_input *data)
-{
-	char buff[100] = {'\0'};
-	char *mid;
-	int x;
-	int ret;
-
-	x = -1;
-	second_tputs("\033[6n");
-	ret = read(0, buff, 9);
-	ft_printf("Read %d bytes\n", ret);
-	while (buff[++x] != '\0' && !(ft_isdigit(buff[x])))
-		;
-	printf("x value %d: %s\n", x, buff + x);
-	printf("->%s<-\n", buff);
-	mid = ft_strchr(buff, ';');
-	if (!mid)
-		ft_putstr("NULLMID!\n");
-	ft_printf("string: %s\n", buff + 1);
-	ft_printf("row: %s\n", buff + x);
-	ft_printf("col: %s\n", mid + 1);
-	data->cursor_row = ft_atoi(buff + x);
-	data->cursor_col = ft_atoi(mid + 1);
 }
 
 void	get_window_size(t_terminal *config)
@@ -133,12 +126,6 @@ void	get_window_size(t_terminal *config)
 	ioctl(0, TIOCGWINSZ, &config->window_size);
 	config->width = config->window_size.ws_col;
 	config->height = config->window_size.ws_row;
-}
-
-void	get_shell_meta(t_terminal *config, t_input *data)
-{
-	get_window_size(config);
-	get_cursor_pos(data);
 }
 
 int		raw_terminal(t_terminal *config)
@@ -164,8 +151,40 @@ void	default_terminal(void)
 	struct termios revert;
 
 	tcgetattr(0, &revert);
-	revert.c_lflag |= (ICANON | ECHO);	tcsetattr(0, TCSADRAIN, &revert);
+	revert.c_lflag |= (ICANON | ECHO);
+	tcsetattr(0, TCSADRAIN, &revert);
 	return ;
+}
+
+void	get_cursor_pos(t_terminal *config, t_input *data)
+{
+	size_t blah;
+	size_t row;
+
+	blah = data->cursor_pos;
+	row = 0;
+	while (blah > config->width)
+	{
+		row++;
+		blah -= config->width;
+	}
+	data->cursor_col = blah;
+	data->cursor_row = row;
+	blah = data->line_size;
+	row = 0;
+	while (blah > config->width)
+	{
+		row++;
+		blah -= config->width;
+	}
+	data->end_col = blah;
+	data->end_row = row;
+}
+
+void	get_terminal_meta(t_terminal *config, t_input *data)
+{
+	get_window_size(config);
+	get_cursor_pos(config, data);
 }
 
 int		main(void)
@@ -178,17 +197,17 @@ int		main(void)
 	ft_dprintf(2, "window dimensions - h: %zu, w: %zu\n", config.height, config.width);
 	while ((read(0, &data.char_buff, 5)) && data.char_buff[0] != 10)
 	{
-		//get_shell_meta(&config, &data);
+		get_terminal_meta(&config, &data);
 		if (ft_isprint(data.char_buff[0]))
 			build_line(&data);
 		if (data.char_buff[0] == 27)
 			move_cursor(&data);
 		ft_bzero((void*)data.char_buff, 5);
-		get_cursor_pos(&data);
 	}
-	get_shell_meta(&config, &data);
+	get_terminal_meta(&config, &data);
 	ft_printf("\nline size %zu, line: %s\n", data.line_size, data.line_buff);
-	ft_printf("Cusor position - row %d, col %d\n", data.cursor_col, data.cursor_row);
+	ft_printf("Cursor position - row %d, col %d\n", data.cursor_row, data.cursor_col);
+	ft_printf("End position - row %d, col %d\n", data.end_row, data.end_col);
 	default_terminal();
 	return (0);
 }
