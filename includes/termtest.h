@@ -15,6 +15,7 @@
 
 # include <term.h>
 # include <termios.h>
+# include <sys/ioctl.h>
 # include "../libft/includes/libft.h"
 
 #endif

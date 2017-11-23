@@ -20,16 +20,20 @@
 #define RIGHT 67
 #define HOME 72
 #define END 70
-#define MOVERIGHT "\033[1C"
-#define MOVELEFT "\033[1D"
+#define SAVEPOS "sc"
+#define MOVERIGHT "nd"
+#define MOVELEFT "le"
+#define MOVEHOME "rc"
 
 typedef struct		s_terminal
 {
 	struct termios	term;
-	struct winsize	sz;
+	struct winsize	window_size;
 	char			*name;
 	char			char_buff[CHAR_BUFF_SIZE];
 	char			line_buff[LINE_BUFF_SIZE];
+	int				width;
+	int				height;
 }					t_terminal;
 
 typedef struct		s_input
@@ -39,6 +43,13 @@ typedef struct		s_input
 	size_t			line_size;
 	size_t			cursor_pos;
 }					t_input;
+
+void	get_win_size(t_terminal *config)
+{
+	ioctl(0, TIOCGWINSZ, &config->window_size);
+	config->width = config->window_size.ws_col;
+	config->height = config->window_size.ws_row;
+}
 
 int		constructor(t_terminal *config)
 {
@@ -51,6 +62,8 @@ int		constructor(t_terminal *config)
 	config->term.c_cc[VMIN] = 1;
 	config->term.c_cc[VTIME] = 0;
 	tcsetattr(0, TCSANOW, &config->term);
+	get_win_size(config);
+	ft_dprintf(2, "width: %d, height: %d\n", config->width, config->height);
 	return (1);
 }
 
@@ -62,17 +75,35 @@ void	build_line(t_input *data)
 	data->cursor_pos++;
 }
 
+int		my_putchar(int c)
+{
+	write(1, &c, 1);
+	return (1);
+}
+
+int (*awesome)(int) = my_putchar;
+
+void	my_tputs(char *cmd)
+{
+	tputs(tgetstr(cmd, NULL), 1, awesome);
+}
+
 void	move_cursor(t_input *data)
 {
 	if (data->char_buff[2] == RIGHT && data->cursor_pos < data->line_size)
 	{
-		ft_printf(MOVERIGHT);
+		my_tputs(MOVERIGHT);
 		data->cursor_pos++;
 	}
 	else if (data->char_buff[2] == LEFT && data->cursor_pos > 0)
 	{
-		ft_printf(MOVELEFT);
+		my_tputs(MOVELEFT);
 		data->cursor_pos--;
+	}
+	else if (data->char_buff[2] == HOME)
+	{
+		my_tputs(MOVEHOME);
+		data->cursor_pos = 0;
 	}
 }
 
@@ -83,7 +114,7 @@ int		main(void)
 
 	if (!(constructor(&config)))
 		return (0);
-	ft_printf("value of left and right %d %d\n", LEFT, RIGHT);
+	my_tputs(SAVEPOS);
 	while ((read(0, &data.char_buff, 5)) && data.char_buff[0] != 10)
 	{
 		if (ft_isprint(data.char_buff[0]))
