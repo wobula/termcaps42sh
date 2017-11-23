@@ -24,8 +24,8 @@
 #define MOVERIGHT "nd"
 #define MOVELEFT "le"
 #define MOVEHOME "rc"
-#define LINEUP "up"
-#define LINEDN "do"
+#define MOVEUP "up"
+#define MOVEDN "do"
 #define LINESTART "cr"
 
 typedef struct		s_terminal
@@ -49,6 +49,7 @@ typedef struct		s_input
 	size_t			cursor_row;
 	size_t			end_col;
 	size_t			end_row;
+	t_terminal		*config;
 }					t_input;
 
 int		ft_intputchar(int c)
@@ -85,7 +86,7 @@ void	move_home(t_input *data)
 {
 	while (data->cursor_row > 0)
 	{
-		my_tputs(LINEUP);
+		my_tputs(MOVEUP);
 		data->cursor_row--;
 	}
 	while (data->cursor_col > 0)
@@ -99,7 +100,7 @@ void	move_end(t_input *data)
 {
 	while (data->cursor_row < data->end_row)
 	{
-		my_tputs(LINEDN);
+		my_tputs(MOVEDN);
 		data->cursor_row++;
 	}
 	if (data->cursor_col > data->end_col)
@@ -120,11 +121,24 @@ void	move_end(t_input *data)
 	}
 }
 
+void	move_test(t_input *data)
+{
+	size_t size;
+
+	size = (data->cursor_col * data->config->width) + data->cursor_col;
+	if (data->cursor_col + 1 == data->config->width)
+	{
+		my_tputs(MOVEDN);
+	}
+	else if (data->cursor_col < size)
+		my_tputs(MOVERIGHT);
+}
+
 void	move_cursor(t_input *data)
 {
 	if (data->char_buff[2] == RIGHT && data->cursor_col < data->line_size)
 	{
-		my_tputs(MOVERIGHT);
+		move_test(data);
 		data->cursor_pos++;
 	}
 	else if (data->char_buff[2] == LEFT && data->cursor_col > 0)
@@ -151,7 +165,7 @@ void	get_window_size(t_terminal *config)
 	config->height = config->window_size.ws_row;
 }
 
-int		raw_terminal(t_terminal *config)
+int		raw_terminal(t_terminal *config, t_input *data)
 {
 	struct termios change;
 
@@ -166,6 +180,7 @@ int		raw_terminal(t_terminal *config)
 	tcsetattr(0, TCSANOW, &change);
 	get_window_size(config);
 	my_tputs(SAVEPOS);
+	data->config = config;
 	return (1);
 }
 
@@ -215,7 +230,7 @@ int		main(void)
 	t_terminal	config;
 	t_input		data;
 
-	if (!(raw_terminal(&config)))
+	if (!(raw_terminal(&config, &data)))
 		return (0);
 	ft_dprintf(2, "window dimensions - h: %zu, w: %zu\n", config.height, config.width);
 	while ((read(0, &data.char_buff, 5)) && data.char_buff[0] != 10)
