@@ -25,6 +25,7 @@
 #define MOVELEFT "le"
 #define MOVEHOME "rc"
 #define LINEUP "up"
+#define LINEDN "do"
 #define LINESTART "cr"
 
 typedef struct		s_terminal
@@ -94,6 +95,31 @@ void	move_home(t_input *data)
 	}
 }
 
+void	move_end(t_input *data)
+{
+	while (data->cursor_row < data->end_row)
+	{
+		my_tputs(LINEDN);
+		data->cursor_row++;
+	}
+	if (data->cursor_col > data->end_col)
+	{
+		while (data->cursor_col > data->end_col)
+		{
+			my_tputs(MOVELEFT);
+			data->cursor_col--;
+		}
+	}
+	else if (data->cursor_col < data->end_col)
+	{
+		while (data->cursor_col < data->end_col)
+		{
+			my_tputs(MOVERIGHT);
+			data->cursor_col++;
+		}
+	}
+}
+
 void	move_cursor(t_input *data)
 {
 	if (data->char_buff[2] == RIGHT && data->cursor_col < data->line_size)
@@ -113,10 +139,7 @@ void	move_cursor(t_input *data)
 	}
 	else if (data->char_buff[2] == END)
 	{
-		ft_printf("-->%s\n", tgetstr("cm", NULL));
-		//tgoto(tgetstr("cm", NULL), data->line_size, 20);
-		second_tputs(tgoto(tgetstr("cm", NULL), data->line_size, 20));
-		//my_tputs(tgoto(tgetstr("cm", NULL), 20, 50));
+		move_end(data);
 		data->cursor_pos = data->line_size;
 	}
 }
