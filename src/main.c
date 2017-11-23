@@ -72,5 +72,6 @@ int		main(void)
 			build_line(&data);
 		//else if ()
 	}
+	ft_printf("\nyour line: %s\n", data.line_buff);
 	return (0);
 }
