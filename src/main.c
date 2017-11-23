@@ -12,19 +12,29 @@
 
 #include "../includes/termtest.h"
 
+#define LINE_BUFF_SIZE 4096
+#define CHAR_BUFF_SIZE 5
+#define ENTER 10
+#define DELETE 127
+#define LEFT 68
+#define RIGHT 67
+#define HOME 72
+#define END 70
+
 typedef struct		s_terminal
 {
 	struct termios	term;
 	struct winsize	sz;
 	char			*name;
-	char			char_buff[5];
-	char			line_buff[4096];
+	char			char_buff[CHAR_BUFF_SIZE];
+	char			line_buff[LINE_BUFF_SIZE];
 }					t_terminal;
 
 typedef struct		s_input
 {
 	char			char_buff[5];
 	char			line_buff[4096];
+	size_t			line_size;
 }					t_input;
 
 int		constructor(t_terminal *config)
@@ -43,9 +53,8 @@ int		constructor(t_terminal *config)
 
 void	build_line(t_input *data)
 {
-	ft_printf("inside build_line: %c\n", data->char_buff[0]);
 	strcat(data->line_buff, data->char_buff);
-	ft_printf("Voila, your line: %s\n", data->line_buff);
+	ft_printf("%c", data->char_buff[0]);
 }
 
 int		main(void)
@@ -57,11 +66,11 @@ int		main(void)
 		return (0);
 	while ((read(0, &data.char_buff, 5)) && data.char_buff[0] != 10)
 	{
-		ft_printf("You just entered: %c\n", data.char_buff[0]);
 		if (data.char_buff[0] == '\E')
 			break;
 		if (ft_isprint(data.char_buff[0]))
 			build_line(&data);
+		//else if ()
 	}
 	return (0);
 }
