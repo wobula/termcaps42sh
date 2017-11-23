@@ -41,50 +41,9 @@ typedef struct		s_input
 	char			char_buff[5];
 	char			line_buff[4096];
 	size_t			line_size;
-	size_t			cursor_pos;
+	size_t			cursor_col;
+	size_t			cursor_row;
 }					t_input;
-
-void	get_win_size(t_terminal *config)
-{
-	ioctl(0, TIOCGWINSZ, &config->window_size);
-	config->width = config->window_size.ws_col;
-	config->height = config->window_size.ws_row;
-}
-
-int		raw_terminal(t_terminal *config)
-{
-	struct termios change;
-
-	get_win_size(config);
-	ft_dprintf(2, "width: %d, height: %d\n", config->width, config->height);
-	if ((tgetent(NULL, getenv("TERM")) < 1))
-		return (0);
-	if ((config->name == getenv("xterm-256color")) == 0)
-		ft_dprintf(2, "Opps, problem with terminal name\n");
-	tcgetattr(0, &change);
-	change.c_lflag &= ~(ICANON | ECHO);
-	change.c_cc[VMIN] = 1;
-	change.c_cc[VTIME] = 0;
-	tcsetattr(0, TCSANOW, &change);
-	return (1);
-}
-
-void	default_terminal(void)
-{
-	struct termios revert;
-
-	tcgetattr(0, &revert);
-	revert.c_lflag |= (ICANON | ECHO);	tcsetattr(0, TCSADRAIN, &revert);
-	return ;
-}
-
-void	build_line(t_input *data)
-{
-	strcat(data->line_buff, data->char_buff);
-	ft_printf("%c", data->char_buff[0]);
-	data->line_size++;
-	data->cursor_pos++;
-}
 
 int		ft_intputchar(int c)
 {
@@ -100,6 +59,14 @@ void	my_tputs(char *cmd)
 	tputs(tgetstr(cmd, NULL), 1, to_function);
 }
 
+void	build_line(t_input *data)
+{
+	strcat(data->line_buff, data->char_buff);
+	ft_printf("%c", data->char_buff[0]);
+	data->line_size++;
+	data->cursor_col++;
+}
+
 void	second_tputs(char *cmd)
 {
 	int (*to_function)(int);
@@ -110,20 +77,20 @@ void	second_tputs(char *cmd)
 
 void	move_cursor(t_input *data)
 {
-	if (data->char_buff[2] == RIGHT && data->cursor_pos < data->line_size)
+	if (data->char_buff[2] == RIGHT && data->cursor_col < data->line_size)
 	{
 		my_tputs(MOVERIGHT);
-		data->cursor_pos++;
+		data->cursor_col++;
 	}
-	else if (data->char_buff[2] == LEFT && data->cursor_pos > 0)
+	else if (data->char_buff[2] == LEFT && data->cursor_col > 0)
 	{
 		my_tputs(MOVELEFT);
-		data->cursor_pos--;
+		data->cursor_col--;
 	}
 	else if (data->char_buff[2] == HOME)
 	{
 		my_tputs(MOVEHOME);
-		data->cursor_pos = 0;
+		data->cursor_col = 0;
 	}
 	else if (data->char_buff[2] == END)
 	{
@@ -131,8 +98,61 @@ void	move_cursor(t_input *data)
 		tgoto(tgetstr("cm", NULL), data->line_size, 20);
 		second_tputs(tgoto(tgetstr("cm", NULL), data->line_size, 20));
 		//my_tputs(tgoto(tgetstr("cm", NULL), 20, 50));
-		data->cursor_pos = data->line_size;
+		data->cursor_col = data->line_size;
 	}
+}
+
+void	get_cursor_pos(t_input *data)
+{
+	char buff[256];
+	char *mid;
+
+	ft_bzero((void*)buff, 256);
+	write(2, "\033[6n", sizeof("\033[6n"));
+	read(0, &buff, 50);
+	mid = ft_strchr(buff, ';');
+	data->cursor_row = ft_atoi(buff + 2);
+	data->cursor_col = ft_atoi(mid + 1);
+}
+
+void	get_window_size(t_terminal *config)
+{
+	ioctl(0, TIOCGWINSZ, &config->window_size);
+	config->width = config->window_size.ws_col;
+	config->height = config->window_size.ws_row;
+}
+
+void	get_shell_meta(t_terminal *config, t_input *data)
+{
+	get_window_size(config);
+	get_cursor_pos(data);
+}
+
+int		raw_terminal(t_terminal *config)
+{
+	struct termios change;
+
+	if ((tgetent(NULL, getenv("TERM")) < 1))
+		return (0);
+	if ((config->name == getenv("xterm-256color")) == 0)
+		ft_dprintf(2, "Opps, problem with terminal name\n");
+	tcgetattr(0, &change);
+	change.c_lflag &= ~(ICANON | ECHO);
+	change.c_cc[VMIN] = 1;
+	change.c_cc[VTIME] = 0;
+	tcsetattr(0, TCSANOW, &change);
+	get_window_size(config);
+	my_tputs(SAVEPOS);
+	return (1);
+}
+
+void	default_terminal(void)
+{
+	struct termios revert;
+
+	tcgetattr(0, &revert);
+	revert.c_lflag |= (ICANON | ECHO);	tcsetattr(0, TCSADRAIN, &revert);
+	return ;
 }
 
 int		main(void)
@@ -142,21 +162,19 @@ int		main(void)
 
 	if (!(raw_terminal(&config)))
 		return (0);
-	my_tputs(SAVEPOS);
-	write(1, "echo -e '\033[6n'", sizeof("echo -e \033[6n'"));
-	ft_dprintf(2, "%zu\n", read(0, &data.line_buff, 50));
-	ft_dprintf(2, "~~~~%d\n", data.line_buff[0]);
-	ft_dprintf(2, "~~~~%c%c\n", data.line_buff[2], data.line_buff[3]);
+	ft_dprintf(2, "window dimensions - h: %zu, w: %zu\n", config.height, config.width);
 	while ((read(0, &data.char_buff, 5)) && data.char_buff[0] != 10)
 	{
+		get_shell_meta(&config, &data);
 		if (ft_isprint(data.char_buff[0]))
 			build_line(&data);
 		if (data.char_buff[0] == 27)
 			move_cursor(&data);
-		get_win_size(&config);
-		//ft_bzero((void*)data.char_buff, 5);
+		ft_bzero((void*)data.char_buff, 5);
 	}
+	get_shell_meta(&config, &data);
 	ft_printf("\nline size %zu, line: %s\n", data.line_size, data.line_buff);
+	ft_printf("Cusor position - row %d, col %d\n", data.cursor_col, data.cursor_row);
 	default_terminal();
 	return (0);
 }

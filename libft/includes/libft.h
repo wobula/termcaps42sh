@@ -47,6 +47,7 @@ int					ft_isprint(int c);
 int					ft_tolower(int c);
 int					ft_toupper(int c);
 char				*ft_itoa(int nbr);
+char				*ft_itoabase(uintmax_t nbr, int base, int opt);
 
 void				ft_memdel(void **ap);
 void				ft_strdel(char **as);
