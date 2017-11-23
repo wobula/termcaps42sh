@@ -20,6 +20,8 @@
 #define RIGHT 67
 #define HOME 72
 #define END 70
+#define MOVERIGHT "\033[1C"
+#define MOVELEFT "\033[1D"
 
 typedef struct		s_terminal
 {
@@ -35,6 +37,7 @@ typedef struct		s_input
 	char			char_buff[5];
 	char			line_buff[4096];
 	size_t			line_size;
+	size_t			cursor_pos;
 }					t_input;
 
 int		constructor(t_terminal *config)
@@ -56,6 +59,21 @@ void	build_line(t_input *data)
 	strcat(data->line_buff, data->char_buff);
 	ft_printf("%c", data->char_buff[0]);
 	data->line_size++;
+	data->cursor_pos++;
+}
+
+void	move_cursor(t_input *data)
+{
+	if (data->char_buff[2] == RIGHT && data->cursor_pos < data->line_size)
+	{
+		ft_printf(MOVERIGHT);
+		data->cursor_pos++;
+	}
+	else if (data->char_buff[2] == LEFT && data->cursor_pos > 0)
+	{
+		ft_printf(MOVELEFT);
+		data->cursor_pos--;
+	}
 }
 
 int		main(void)
@@ -71,16 +89,7 @@ int		main(void)
 		if (ft_isprint(data.char_buff[0]))
 			build_line(&data);
 		if (data.char_buff[0] == 27)
-		{
-			if (data.char_buff[2] == RIGHT)
-			{
-				ft_printf("\033[1C");
-			}
-			else if (data.char_buff[2] == LEFT)
-			{
-				ft_printf("\033[1D");
-			}
-		}
+			move_cursor(&data);
 	}
 	ft_printf("\nline size %zu, line: %s\n", data.line_size, data.line_buff);
 	return (0);
