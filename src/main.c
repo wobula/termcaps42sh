@@ -100,6 +100,14 @@ void	my_tputs(char *cmd)
 	tputs(tgetstr(cmd, NULL), 1, to_function);
 }
 
+void	second_tputs(char *cmd)
+{
+	int (*to_function)(int);
+
+	to_function = ft_intputchar;
+	tputs(cmd, 1, to_function);
+}
+
 void	move_cursor(t_input *data)
 {
 	if (data->char_buff[2] == RIGHT && data->cursor_pos < data->line_size)
@@ -117,6 +125,14 @@ void	move_cursor(t_input *data)
 		my_tputs(MOVEHOME);
 		data->cursor_pos = 0;
 	}
+	else if (data->char_buff[2] == END)
+	{
+		ft_printf("-->%s\n", tgetstr("cm", NULL));
+		tgoto(tgetstr("cm", NULL), data->line_size, 20);
+		second_tputs(tgoto(tgetstr("cm", NULL), data->line_size, 20));
+		//my_tputs(tgoto(tgetstr("cm", NULL), 20, 50));
+		data->cursor_pos = data->line_size;
+	}
 }
 
 int		main(void)
@@ -127,13 +143,18 @@ int		main(void)
 	if (!(raw_terminal(&config)))
 		return (0);
 	my_tputs(SAVEPOS);
+	write(1, "echo -e '\033[6n'", sizeof("echo -e \033[6n'"));
+	ft_dprintf(2, "%zu\n", read(0, &data.line_buff, 50));
+	ft_dprintf(2, "~~~~%d\n", data.line_buff[0]);
+	ft_dprintf(2, "~~~~%c%c\n", data.line_buff[2], data.line_buff[3]);
 	while ((read(0, &data.char_buff, 5)) && data.char_buff[0] != 10)
 	{
 		if (ft_isprint(data.char_buff[0]))
 			build_line(&data);
 		if (data.char_buff[0] == 27)
 			move_cursor(&data);
-		ft_bzero((void*)data.char_buff, 5);
+		get_win_size(&config);
+		//ft_bzero((void*)data.char_buff, 5);
 	}
 	ft_printf("\nline size %zu, line: %s\n", data.line_size, data.line_buff);
 	default_terminal();
