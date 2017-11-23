@@ -11,6 +11,7 @@
 /* ************************************************************************** */
 
 #include "../includes/termtest.h"
+#include <time.h>
 
 #define LINE_BUFF_SIZE 4096
 #define CHAR_BUFF_SIZE 5
@@ -95,7 +96,7 @@ void	move_cursor(t_input *data)
 	else if (data->char_buff[2] == END)
 	{
 		ft_printf("-->%s\n", tgetstr("cm", NULL));
-		tgoto(tgetstr("cm", NULL), data->line_size, 20);
+		//tgoto(tgetstr("cm", NULL), data->line_size, 20);
 		second_tputs(tgoto(tgetstr("cm", NULL), data->line_size, 20));
 		//my_tputs(tgoto(tgetstr("cm", NULL), 20, 50));
 		data->cursor_col = data->line_size;
@@ -104,14 +105,26 @@ void	move_cursor(t_input *data)
 
 void	get_cursor_pos(t_input *data)
 {
-	char buff[256];
+	char buff[100] = {'\0'};
 	char *mid;
+	int x;
+	int ret;
 
-	ft_bzero((void*)buff, 256);
-	write(2, "\033[6n", sizeof("\033[6n"));
-	read(0, &buff, 50);
+	x = -1;
+	second_tputs("\033[6n");
+	ret = read(0, buff, 9);
+	ft_printf("Read %d bytes\n", ret);
+	while (buff[++x] != '\0' && !(ft_isdigit(buff[x])))
+		;
+	printf("x value %d: %s\n", x, buff + x);
+	printf("->%s<-\n", buff);
 	mid = ft_strchr(buff, ';');
-	data->cursor_row = ft_atoi(buff + 2);
+	if (!mid)
+		ft_putstr("NULLMID!\n");
+	ft_printf("string: %s\n", buff + 1);
+	ft_printf("row: %s\n", buff + x);
+	ft_printf("col: %s\n", mid + 1);
+	data->cursor_row = ft_atoi(buff + x);
 	data->cursor_col = ft_atoi(mid + 1);
 }
 
@@ -165,12 +178,13 @@ int		main(void)
 	ft_dprintf(2, "window dimensions - h: %zu, w: %zu\n", config.height, config.width);
 	while ((read(0, &data.char_buff, 5)) && data.char_buff[0] != 10)
 	{
-		get_shell_meta(&config, &data);
+		//get_shell_meta(&config, &data);
 		if (ft_isprint(data.char_buff[0]))
 			build_line(&data);
 		if (data.char_buff[0] == 27)
 			move_cursor(&data);
 		ft_bzero((void*)data.char_buff, 5);
+		get_cursor_pos(&data);
 	}
 	get_shell_meta(&config, &data);
 	ft_printf("\nline size %zu, line: %s\n", data.line_size, data.line_buff);
