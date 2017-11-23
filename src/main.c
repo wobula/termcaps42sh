@@ -55,6 +55,7 @@ void	build_line(t_input *data)
 {
 	strcat(data->line_buff, data->char_buff);
 	ft_printf("%c", data->char_buff[0]);
+	data->line_size++;
 }
 
 int		main(void)
@@ -64,14 +65,23 @@ int		main(void)
 
 	if (!(constructor(&config)))
 		return (0);
+	ft_printf("value of left and right %d %d\n", LEFT, RIGHT);
 	while ((read(0, &data.char_buff, 5)) && data.char_buff[0] != 10)
 	{
-		if (data.char_buff[0] == '\E')
-			break;
 		if (ft_isprint(data.char_buff[0]))
 			build_line(&data);
-		//else if ()
+		if (data.char_buff[0] == 27)
+		{
+			if (data.char_buff[2] == RIGHT)
+			{
+				ft_printf("\033[1C");
+			}
+			else if (data.char_buff[2] == LEFT)
+			{
+				ft_printf("\033[1D");
+			}
+		}
 	}
-	ft_printf("\nyour line: %s\n", data.line_buff);
+	ft_printf("\nline size %zu, line: %s\n", data.line_size, data.line_buff);
 	return (0);
 }
