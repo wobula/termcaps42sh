@@ -51,20 +51,31 @@ void	get_win_size(t_terminal *config)
 	config->height = config->window_size.ws_row;
 }
 
-int		constructor(t_terminal *config)
+int		raw_terminal(t_terminal *config)
 {
+	struct termios change;
+
+	get_win_size(config);
+	ft_dprintf(2, "width: %d, height: %d\n", config->width, config->height);
 	if ((tgetent(NULL, getenv("TERM")) < 1))
 		return (0);
 	if ((config->name == getenv("xterm-256color")) == 0)
 		ft_dprintf(2, "Opps, problem with terminal name\n");
-	tcgetattr(0, &config->term);
-	config->term.c_lflag &= ~(ICANON | ECHO);
-	config->term.c_cc[VMIN] = 1;
-	config->term.c_cc[VTIME] = 0;
-	tcsetattr(0, TCSANOW, &config->term);
-	get_win_size(config);
-	ft_dprintf(2, "width: %d, height: %d\n", config->width, config->height);
+	tcgetattr(0, &change);
+	change.c_lflag &= ~(ICANON | ECHO);
+	change.c_cc[VMIN] = 1;
+	change.c_cc[VTIME] = 0;
+	tcsetattr(0, TCSANOW, &change);
 	return (1);
+}
+
+void	default_terminal(void)
+{
+	struct termios revert;
+
+	tcgetattr(0, &revert);
+	revert.c_lflag |= (ICANON | ECHO);	tcsetattr(0, TCSADRAIN, &revert);
+	return ;
 }
 
 void	build_line(t_input *data)
@@ -75,17 +86,18 @@ void	build_line(t_input *data)
 	data->cursor_pos++;
 }
 
-int		my_putchar(int c)
+int		ft_intputchar(int c)
 {
 	write(1, &c, 1);
 	return (1);
 }
 
-int (*awesome)(int) = my_putchar;
-
 void	my_tputs(char *cmd)
 {
-	tputs(tgetstr(cmd, NULL), 1, awesome);
+	int (*to_function)(int);
+
+	to_function = ft_intputchar;
+	tputs(tgetstr(cmd, NULL), 1, to_function);
 }
 
 void	move_cursor(t_input *data)
@@ -112,7 +124,7 @@ int		main(void)
 	t_terminal	config;
 	t_input		data;
 
-	if (!(constructor(&config)))
+	if (!(raw_terminal(&config)))
 		return (0);
 	my_tputs(SAVEPOS);
 	while ((read(0, &data.char_buff, 5)) && data.char_buff[0] != 10)
@@ -121,7 +133,9 @@ int		main(void)
 			build_line(&data);
 		if (data.char_buff[0] == 27)
 			move_cursor(&data);
+		ft_bzero((void*)data.char_buff, 5);
 	}
 	ft_printf("\nline size %zu, line: %s\n", data.line_size, data.line_buff);
+	default_terminal();
 	return (0);
 }

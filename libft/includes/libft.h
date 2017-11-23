@@ -58,14 +58,14 @@ void				*ft_memmove(void *dst, const void *src, size_t len);
 void				*ft_memalloc(size_t size);
 int					ft_memcmp(const void *s1, const void *s2, size_t n);
 
-void				ft_putchar(char c);
+void				ft_putchar(int c);
 void				ft_putnbr(int nbr);
 void				ft_putstr(char *str);
 void				ft_fputstr(char *str);
 void				ft_fputstr_fd(char *str, int fd);
 void				ft_fputstrn_fd(char *str, int max, int fd);
 void				ft_putendl(char const *s);
-void				ft_putchar_fd(char c, int fd);
+void				ft_putchar_fd(int c, int fd);
 void				ft_putnbr_fd(int n, int fd);
 void				ft_putstr_fd(char const *s, int fd);
 void				ft_putendl_fd(char const *s, int fd);
