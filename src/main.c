@@ -130,9 +130,22 @@ void	move_right(t_input *data)
 		my_tputs(MOVERIGHT);
 }
 
-void	history_up(t_cmds *history)
+void	clear_line(t_input *data)
 {
-	if (!history->current)
+	size_t x;
+
+	x = data->line_size + 1;
+	while (--x > 0)
+	{
+		my_tputs(MOVELEFT);
+		my_tputs("dc");
+	}
+}
+
+void	history_up(t_input *data, t_cmds *history)
+{
+	clear_line(data);
+	if (!history->current || !history->current->cmd)
 	{
 		history->current = history;
 	}
@@ -141,7 +154,12 @@ void	history_up(t_cmds *history)
 		history->current = history->current->next;
 	}
 	if (history->current && history->current->cmd)
-		ft_printf("-->%s\n", history->current->cmd);
+	{
+		ft_printf("%s", history->current->cmd);
+		ft_bzero(data->line_buff, data->line_size);
+		data->line_size = ft_strlen(history->current->cmd);
+		ft_strcpy(data->line_buff, history->current->cmd);
+	}
 }
 
 void	move_cursor(t_input *data, t_cmds *history)
@@ -168,7 +186,7 @@ void	move_cursor(t_input *data, t_cmds *history)
 	}
 	else if (data->char_buff[2] == UP)
 	{
-		history_up(history);
+		history_up(data, history);
 	}
 	else if (data->char_buff[2] == DOWN)
 	{
