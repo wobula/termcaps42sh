@@ -60,6 +60,7 @@ typedef struct		s_cmds
 	struct s_cmds	*next;
 	struct s_cmds	*prev;
 	struct s_cmds	*end;
+	struct s_cmds	*current;
 	char			*cmd;
 }					t_cmds;
 
@@ -132,11 +133,15 @@ void	move_right(t_input *data)
 void	history_up(t_input *data, t_cmds *history)
 {
 	ft_printf("%d\n", data->config->width);
-	if (history->cmd)
-		ft_printf("%s\n", history->cmd);
+	if (!history->current)
+		history->current = history;
+	else
+		history->current = history->current->next;
+	if (history->current && history->current->cmd)
+		ft_printf("-->%s\n", history->cmd);
 }
 
-void	move_cursor(t_input *data, t_cmds *history)
+void	move_cursor(t_input *data/*, t_cmds *history*/)
 {
 	if (data->char_buff[2] == RIGHT && data->cursor_col < data->line_size)
 	{
@@ -158,11 +163,11 @@ void	move_cursor(t_input *data, t_cmds *history)
 		move_end(data);
 		data->cursor_pos = data->line_size;
 	}
-	else if (data->char_buff[2] == UP)
+	/*else if (data->char_buff[2] == UP)
 	{
 		ft_printf("Pressed up\n");
 		history_up(data, history);
-	}
+	}*/
 	else if (data->char_buff[2] == DOWN)
 	{
 		ft_printf("Pressed down\n");
@@ -238,11 +243,15 @@ void	get_terminal_meta(t_terminal *config, t_input *data)
 
 void	delete(t_input *data)
 {
+	char *tmp;
+
 	my_tputs(MOVELEFT);
 	my_tputs("dc");
-	data->line_buff[data->cursor_pos] = '\0';
-	strcat(data->line_buff, data->line_buff + data->cursor_pos + 1);
+	tmp = data->line_buff + (data->cursor_pos - 1);
+	*tmp = '\0';
+	ft_memmove(tmp, tmp + 1, ft_strlen(tmp + 1));
 	data->line_size--;
+	data->line_buff[data->line_size] = '\0';
 	data->cursor_pos--;
 }
 
@@ -268,6 +277,7 @@ void	history_constructor(t_cmds *head)
 	head->next = NULL;
 	head->end = NULL;
 	head->cmd = NULL;
+	head->current = NULL;
 }
 
 void	add_cmd(t_cmds *head, char *cmd)
@@ -293,11 +303,13 @@ void	add_cmd(t_cmds *head, char *cmd)
 	head->end = head->end->next;
 }
 
-void	vizualize_history(t_cmds head)
+void	vizualize_history(t_cmds *head)
 {
 	t_cmds *tmp;
 
-	tmp = &head;
+	if (!head->cmd)
+		return ;
+	tmp = head;
 	ft_printf("\n\nHistory:\n");
 	while (tmp)
 	{
@@ -353,12 +365,14 @@ int		main(void)
 			else if (data.char_buff[0] == DELETE && data.cursor_pos != 0)
 				delete(&data);
 			else if (data.char_buff[0] == 27)
-				move_cursor(&data, &history);
+				move_cursor(&data/*, &history*/);
 			ft_bzero((void*)data.char_buff, 5);
 		}
 		if (data.line_buff[0] != '\0')
 			add_cmd(&history, data.line_buff);
-		vizualize_history(history);
+		else
+			ft_putchar('\n');
+		vizualize_history(&history);
 		if (ft_strcmp(data.line_buff, "exit") == 0)
 			break;
 	}
