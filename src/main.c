@@ -14,12 +14,16 @@
 
 #define LINE_BUFF_SIZE 4096
 #define CHAR_BUFF_SIZE 5
+
 #define ENTER 10
 #define DELETE 127
+#define UP 65
+#define DOWN 66
 #define LEFT 68
 #define RIGHT 67
 #define HOME 72
 #define END 70
+
 #define SAVEPOS "sc"
 #define MOVERIGHT "nd"
 #define MOVELEFT "le"
@@ -146,6 +150,14 @@ void	move_cursor(t_input *data)
 	{
 		move_end(data);
 		data->cursor_pos = data->line_size;
+	}
+	else if (data->char_buff[2] == UP)
+	{
+		ft_printf("Pressed up\n");
+	}
+	else if (data->char_buff[2] == DOWN)
+	{
+		ft_printf("Pressed down\n");
 	}
 }
 
