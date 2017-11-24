@@ -156,8 +156,6 @@ void	move_cursor(t_input *data)
 		move_end(data);
 		data->cursor_pos = data->line_size;
 	}
-	else if (data->char_buff[2] == DELETE)
-		ft_putstr("You pressed delete\n");
 }
 
 void	get_window_size(t_terminal *config)
@@ -237,6 +235,16 @@ void	delete(t_input *data)
 	data->cursor_pos--;
 }
 
+void	insert(t_input *data)
+{
+	data->config->width = 0;
+	my_tputs("im");
+	ft_putstr(data->char_buff);
+	my_tputs("ei");
+	data->cursor_pos++;
+	data->line_size++;
+}
+
 int		main(void)
 {
 	t_terminal	config;
@@ -250,6 +258,8 @@ int		main(void)
 		get_terminal_meta(&config, &data);
 		if (ft_isprint(data.char_buff[0]) && data.cursor_pos == data.line_size)
 			build_line(&data);
+		else if (ft_isprint(data.char_buff[0]))
+			insert(&data);
 		else if (data.char_buff[0] == DELETE && data.cursor_pos != 0)
 			delete(&data);
 		else if (data.char_buff[0] == 27)
