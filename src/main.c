@@ -121,7 +121,7 @@ void	move_end(t_input *data)
 	}
 }
 
-void	move_test(t_input *data)
+void	move_right(t_input *data)
 {
 	size_t size;
 
@@ -138,7 +138,7 @@ void	move_cursor(t_input *data)
 {
 	if (data->char_buff[2] == RIGHT && data->cursor_col < data->line_size)
 	{
-		move_test(data);
+		move_right(data);
 		data->cursor_pos++;
 	}
 	else if (data->char_buff[2] == LEFT && data->cursor_col > 0)
@@ -156,6 +156,8 @@ void	move_cursor(t_input *data)
 		move_end(data);
 		data->cursor_pos = data->line_size;
 	}
+	else if (data->char_buff[2] == DELETE)
+		ft_putstr("You pressed delete\n");
 }
 
 void	get_window_size(t_terminal *config)
@@ -225,6 +227,16 @@ void	get_terminal_meta(t_terminal *config, t_input *data)
 	get_cursor_pos(config, data);
 }
 
+void	delete(t_input *data)
+{
+	my_tputs(MOVELEFT);
+	my_tputs("dc");
+	data->line_buff[data->cursor_pos] = '\0';
+	strcat(data->line_buff, data->line_buff + data->cursor_pos + 1);
+	data->line_size--;
+	data->cursor_pos--;
+}
+
 int		main(void)
 {
 	t_terminal	config;
@@ -236,9 +248,11 @@ int		main(void)
 	while ((read(0, &data.char_buff, 5)) && data.char_buff[0] != 10)
 	{
 		get_terminal_meta(&config, &data);
-		if (ft_isprint(data.char_buff[0]))
+		if (ft_isprint(data.char_buff[0]) && data.cursor_pos == data.line_size)
 			build_line(&data);
-		if (data.char_buff[0] == 27)
+		else if (data.char_buff[0] == DELETE && data.cursor_pos != 0)
+			delete(&data);
+		else if (data.char_buff[0] == 27)
 			move_cursor(&data);
 		ft_bzero((void*)data.char_buff, 5);
 	}
