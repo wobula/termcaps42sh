@@ -129,7 +129,14 @@ void	move_right(t_input *data)
 		my_tputs(MOVERIGHT);
 }
 
-void	move_cursor(t_input *data)
+void	history_up(t_input *data, t_cmds *history)
+{
+	ft_printf("%d\n", data->config->width);
+	if (history->cmd)
+		ft_printf("%s\n", history->cmd);
+}
+
+void	move_cursor(t_input *data, t_cmds *history)
 {
 	if (data->char_buff[2] == RIGHT && data->cursor_col < data->line_size)
 	{
@@ -154,6 +161,7 @@ void	move_cursor(t_input *data)
 	else if (data->char_buff[2] == UP)
 	{
 		ft_printf("Pressed up\n");
+		history_up(data, history);
 	}
 	else if (data->char_buff[2] == DOWN)
 	{
@@ -345,7 +353,7 @@ int		main(void)
 			else if (data.char_buff[0] == DELETE && data.cursor_pos != 0)
 				delete(&data);
 			else if (data.char_buff[0] == 27)
-				move_cursor(&data);
+				move_cursor(&data, &history);
 			ft_bzero((void*)data.char_buff, 5);
 		}
 		if (data.line_buff[0] != '\0')
