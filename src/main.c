@@ -58,28 +58,12 @@ int		ft_intputchar(int c)
 	return (1);
 }
 
-void	second_tputs(char *cmd)
-{
-	int (*to_function)(int);
-
-	to_function = ft_intputchar;
-	tputs(cmd, 1, to_function);
-}
-
 void	my_tputs(char *cmd)
 {
 	int (*to_function)(int);
 
 	to_function = ft_intputchar;
 	tputs(tgetstr(cmd, NULL), 1, to_function);
-}
-
-void	build_line(t_input *data)
-{
-	strcat(data->line_buff, data->char_buff);
-	ft_printf("%c", data->char_buff[0]);
-	data->line_size++;
-	data->cursor_pos++;
 }
 
 void	move_home(t_input *data)
@@ -237,7 +221,13 @@ void	delete(t_input *data)
 
 void	insert(t_input *data)
 {
-	data->config->width = 0;
+	char	buff[LINE_BUFF_SIZE];
+
+	ft_bzero((void*)buff, LINE_BUFF_SIZE);
+	strcpy(buff, data->char_buff);
+	strcat(buff, data->line_buff + data->cursor_pos);
+	data->line_buff[data->cursor_pos] = '\0';
+	strcat(data->line_buff, buff);
 	my_tputs("im");
 	ft_putstr(data->char_buff);
 	my_tputs("ei");
@@ -252,13 +242,10 @@ int		main(void)
 
 	if (!(raw_terminal(&config, &data)))
 		return (0);
-	ft_dprintf(2, "window dimensions - h: %zu, w: %zu\n", config.height, config.width);
 	while ((read(0, &data.char_buff, 5)) && data.char_buff[0] != 10)
 	{
 		get_terminal_meta(&config, &data);
-		if (ft_isprint(data.char_buff[0]) && data.cursor_pos == data.line_size)
-			build_line(&data);
-		else if (ft_isprint(data.char_buff[0]))
+		if (ft_isprint(data.char_buff[0]))
 			insert(&data);
 		else if (data.char_buff[0] == DELETE && data.cursor_pos != 0)
 			delete(&data);
