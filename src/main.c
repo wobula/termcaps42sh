@@ -308,7 +308,7 @@ void	delete(t_input *data)
 	data->line_size--;
 	data->line_buff[data->line_size] = '\0';
 	data->cursor_pos--;
-	ft_printf("\n-> %s\n", data->line_buff);
+	//ft_printf("\n-> %s\n", data->line_buff);
 }
 
 void	insert(t_input *data)
@@ -325,7 +325,7 @@ void	insert(t_input *data)
 	my_tputs("ei");
 	data->cursor_pos++;
 	data->line_size++;
-	ft_printf("\n-> %s\n", data->line_buff);
+	//ft_printf("\n-> %s\n", data->line_buff);
 }
 
 void	history_constructor(t_cmds *head)
@@ -337,7 +337,7 @@ void	history_constructor(t_cmds *head)
 	head->current = NULL;
 }
 
-void	add_cmd(t_cmds *head, char *cmd)
+void	history_add(t_cmds *head, char *cmd)
 {
 	if (!head->cmd)
 	{
@@ -402,9 +402,17 @@ void	input_constructor(t_input *data)
 	data->cursor_pos = 0;
 }
 
-void	putprompt(void)
+int		valid_string(char *str)
 {
-	ft_putstr("$> ");
+	int x;
+
+	x = -1;
+	while (str[++x])
+	{
+		if (!(ft_isblank(str[x])))
+			return (1);
+	}
+	return (0);
 }
 
 int		main(void)
@@ -419,7 +427,7 @@ int		main(void)
 	while (1)
 	{
 		input_constructor(&data);
-		putprompt();
+		ft_putstr("$> ");
 		while ((read(0, &data.char_buff, 5)) && data.char_buff[0] != ENTER)
 		{
 			get_terminal_meta(&config, &data);
@@ -431,17 +439,13 @@ int		main(void)
 				move_cursor(&data, &history);
 			ft_bzero((void*)data.char_buff, 5);
 		}
-		if (ft_isblank(!data.line_buff[0]))
-			add_cmd(&history, data.line_buff);
+		if ((valid_string(data.line_buff)))
+			history_add(&history, data.line_buff);
 		ft_putchar('\n');
 		if (ft_strcmp(data.line_buff, "exit") == 0)
 			break;
 	}
 	cleanup_history(&history);
-	get_terminal_meta(&config, &data);
-	ft_printf("\nline size %zu, line: %s\n", data.line_size, data.line_buff);
-	ft_printf("Cursor position - row %d, col %d\n", data.cursor_row, data.cursor_col);
-	ft_printf("End position - row %d, col %d\n", data.end_row, data.end_col);
 	default_terminal();
 	return (0);
 }
