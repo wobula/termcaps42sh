@@ -134,11 +134,39 @@ void	clear_line(t_input *data)
 {
 	size_t x;
 
-	x = data->line_size + 1;
-	while (--x > 0)
+	x = data->line_size;
+	while (x > 0)
 	{
 		my_tputs(MOVELEFT);
 		my_tputs("dc");
+		x--;
+	}
+}
+
+void	history_dn(t_input *data, t_cmds *history)
+{
+	clear_line(data);
+	if (!history->current || !history->current->cmd)
+	{
+		history->current = history->end;
+	}
+	else if (history->current->cmd)
+	{
+		history->current = history->current->prev;
+	}
+	if (history->current && history->current->cmd)
+	{
+		ft_printf("%s", history->current->cmd);
+		ft_bzero(data->line_buff, data->line_size);
+		data->line_size = ft_strlen(history->current->cmd);
+		data->cursor_pos = data->line_size;
+		ft_strcpy(data->line_buff, history->current->cmd);
+	}
+	else
+	{
+		ft_bzero(data->line_buff, data->line_size);
+		data->line_size = 0;
+		data->cursor_pos = 0;
 	}
 }
 
@@ -158,7 +186,14 @@ void	history_up(t_input *data, t_cmds *history)
 		ft_printf("%s", history->current->cmd);
 		ft_bzero(data->line_buff, data->line_size);
 		data->line_size = ft_strlen(history->current->cmd);
+		data->cursor_pos = data->line_size;
 		ft_strcpy(data->line_buff, history->current->cmd);
+	}
+	else
+	{
+		ft_bzero(data->line_buff, data->line_size);
+		data->line_size = 0;
+		data->cursor_pos = 0;
 	}
 }
 
@@ -190,7 +225,7 @@ void	move_cursor(t_input *data, t_cmds *history)
 	}
 	else if (data->char_buff[2] == DOWN)
 	{
-		ft_printf("Pressed down\n");
+		history_dn(data, history);
 	}
 }
 
@@ -273,6 +308,7 @@ void	delete(t_input *data)
 	data->line_size--;
 	data->line_buff[data->line_size] = '\0';
 	data->cursor_pos--;
+	ft_printf("\n-> %s\n", data->line_buff);
 }
 
 void	insert(t_input *data)
@@ -289,6 +325,7 @@ void	insert(t_input *data)
 	my_tputs("ei");
 	data->cursor_pos++;
 	data->line_size++;
+	ft_printf("\n-> %s\n", data->line_buff);
 }
 
 void	history_constructor(t_cmds *head)
@@ -365,6 +402,11 @@ void	input_constructor(t_input *data)
 	data->cursor_pos = 0;
 }
 
+void	putprompt(void)
+{
+	ft_putstr("$> ");
+}
+
 int		main(void)
 {
 	t_terminal	config;
@@ -377,6 +419,7 @@ int		main(void)
 	while (1)
 	{
 		input_constructor(&data);
+		putprompt();
 		while ((read(0, &data.char_buff, 5)) && data.char_buff[0] != ENTER)
 		{
 			get_terminal_meta(&config, &data);
@@ -388,11 +431,9 @@ int		main(void)
 				move_cursor(&data, &history);
 			ft_bzero((void*)data.char_buff, 5);
 		}
-		if (data.line_buff[0] != '\0')
+		if (ft_isblank(!data.line_buff[0]))
 			add_cmd(&history, data.line_buff);
-		else
-			ft_putchar('\n');
-		vizualize_history(&history);
+		ft_putchar('\n');
 		if (ft_strcmp(data.line_buff, "exit") == 0)
 			break;
 	}

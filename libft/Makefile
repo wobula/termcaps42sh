@@ -21,6 +21,7 @@ LIBFT = libft/ft_bzero.c \
 	   libft/ft_isalnum.c \
 	   libft/ft_isascii.c \
 	   libft/ft_isprint.c \
+	   libft/ft_isblank.c \
 	   libft/ft_toupper.c \
 	   libft/ft_tolower.c \
 	   libft/ft_memset.c \
