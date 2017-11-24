@@ -52,6 +52,14 @@ typedef struct		s_input
 	t_terminal		*config;
 }					t_input;
 
+typedef struct		s_cmds
+{
+	struct s_cmds	*next;
+	struct s_cmds	*prev;
+	struct s_cmds	*end;
+	char			*cmd;
+}					t_cmds;
+
 int		ft_intputchar(int c)
 {
 	write(1, &c, 1);
@@ -235,23 +243,77 @@ void	insert(t_input *data)
 	data->line_size++;
 }
 
+void	cmd_constructor(t_cmds *head)
+{
+	head->prev = NULL;
+	head->next = NULL;
+	head->end = NULL;
+	head->cmd = NULL;
+}
+
+void	add_cmd(t_cmds *head, char *cmd)
+{
+	if (!head->cmd)
+	{
+		head->cmd = ft_strdup(cmd);
+		return ;
+	}
+	else if (!head->next)
+	{
+		head->next = (t_cmds*)ft_memalloc(sizeof(t_cmds));
+		head->next->next = NULL;
+		head->next->prev = head;
+		head->end = head->next;
+		head->next->cmd = ft_strdup(cmd);
+		return ;
+	}
+	head->end->next = (t_cmds*)ft_memalloc(sizeof(t_cmds));
+	head->end->next->next = NULL;
+	head->end->next->prev = head->end;
+	head->end->next->cmd = ft_strdup(cmd);
+	head->end = head->end->next;
+}
+
+void	vizualize_history(t_cmds head)
+{
+	t_cmds *tmp;
+
+	tmp = &head;
+	ft_printf("\n\nHistory:\n");
+	while (tmp)
+	{
+		ft_printf("%s\n", tmp->cmd);
+		tmp = tmp->next;
+	}
+	ft_putchar('\n');
+}
+
 int		main(void)
 {
 	t_terminal	config;
 	t_input		data;
+	t_cmds		history;
 
 	if (!(raw_terminal(&config, &data)))
 		return (0);
-	while ((read(0, &data.char_buff, 5)) && data.char_buff[0] != 10)
+	cmd_constructor(&history);
+	while (1)
 	{
-		get_terminal_meta(&config, &data);
-		if (ft_isprint(data.char_buff[0]))
-			insert(&data);
-		else if (data.char_buff[0] == DELETE && data.cursor_pos != 0)
-			delete(&data);
-		else if (data.char_buff[0] == 27)
-			move_cursor(&data);
-		ft_bzero((void*)data.char_buff, 5);
+		ft_bzero(data.line_buff, LINE_BUFF_SIZE);
+		while ((read(0, &data.char_buff, 5)) && data.char_buff[0] != ENTER)
+		{
+			get_terminal_meta(&config, &data);
+			if (ft_isprint(data.char_buff[0]))
+				insert(&data);
+			else if (data.char_buff[0] == DELETE && data.cursor_pos != 0)
+				delete(&data);
+			else if (data.char_buff[0] == 27)
+				move_cursor(&data);
+			ft_bzero((void*)data.char_buff, 5);
+		}
+		if (data.line_buff[0] != '\0')
+			add_cmd(&history, data.line_buff);
+		vizualize_history(history);
 	}
 	get_terminal_meta(&config, &data);
 	ft_printf("\nline size %zu, line: %s\n", data.line_size, data.line_buff);
