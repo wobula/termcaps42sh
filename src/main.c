@@ -23,7 +23,6 @@
 #define SAVEPOS "sc"
 #define MOVERIGHT "nd"
 #define MOVELEFT "le"
-#define MOVEHOME "rc"
 #define MOVEUP "up"
 #define MOVEDN "do"
 #define LINESTART "cr"
