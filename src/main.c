@@ -243,7 +243,7 @@ void	insert(t_input *data)
 	data->line_size++;
 }
 
-void	cmd_constructor(t_cmds *head)
+void	history_constructor(t_cmds *head)
 {
 	head->prev = NULL;
 	head->next = NULL;
@@ -288,6 +288,32 @@ void	vizualize_history(t_cmds head)
 	ft_putchar('\n');
 }
 
+void	cleanup_history(t_cmds *head)
+{
+	t_cmds *tmp;
+	t_cmds *prev;
+	if (head->cmd)
+		free(head->cmd);
+	tmp = head->next;
+	{
+		while (tmp)
+		{
+			prev = tmp;
+			tmp = tmp->next;
+			free(prev->cmd);
+			free(prev);
+		}
+	}
+}
+
+void	input_constructor(t_input *data)
+{
+	ft_bzero(data->char_buff, 5);
+	ft_bzero(data->line_buff, 4096);
+	data->line_size = 0;
+	data->cursor_pos = 0;
+}
+
 int		main(void)
 {
 	t_terminal	config;
@@ -296,10 +322,10 @@ int		main(void)
 
 	if (!(raw_terminal(&config, &data)))
 		return (0);
-	cmd_constructor(&history);
+	history_constructor(&history);
 	while (1)
 	{
-		ft_bzero(data.line_buff, LINE_BUFF_SIZE);
+		input_constructor(&data);
 		while ((read(0, &data.char_buff, 5)) && data.char_buff[0] != ENTER)
 		{
 			get_terminal_meta(&config, &data);
@@ -314,7 +340,10 @@ int		main(void)
 		if (data.line_buff[0] != '\0')
 			add_cmd(&history, data.line_buff);
 		vizualize_history(history);
+		if (ft_strcmp(data.line_buff, "exit") == 0)
+			break;
 	}
+	cleanup_history(&history);
 	get_terminal_meta(&config, &data);
 	ft_printf("\nline size %zu, line: %s\n", data.line_size, data.line_buff);
 	ft_printf("Cursor position - row %d, col %d\n", data.cursor_row, data.cursor_col);
