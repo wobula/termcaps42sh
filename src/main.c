@@ -130,18 +130,21 @@ void	move_right(t_input *data)
 		my_tputs(MOVERIGHT);
 }
 
-void	history_up(t_input *data, t_cmds *history)
+void	history_up(t_cmds *history)
 {
-	ft_printf("%d\n", data->config->width);
 	if (!history->current)
+	{
 		history->current = history;
-	else
+	}
+	else if (history->current->cmd)
+	{
 		history->current = history->current->next;
+	}
 	if (history->current && history->current->cmd)
-		ft_printf("-->%s\n", history->cmd);
+		ft_printf("-->%s\n", history->current->cmd);
 }
 
-void	move_cursor(t_input *data/*, t_cmds *history*/)
+void	move_cursor(t_input *data, t_cmds *history)
 {
 	if (data->char_buff[2] == RIGHT && data->cursor_col < data->line_size)
 	{
@@ -163,11 +166,10 @@ void	move_cursor(t_input *data/*, t_cmds *history*/)
 		move_end(data);
 		data->cursor_pos = data->line_size;
 	}
-	/*else if (data->char_buff[2] == UP)
+	else if (data->char_buff[2] == UP)
 	{
-		ft_printf("Pressed up\n");
-		history_up(data, history);
-	}*/
+		history_up(history);
+	}
 	else if (data->char_buff[2] == DOWN)
 	{
 		ft_printf("Pressed down\n");
@@ -365,7 +367,7 @@ int		main(void)
 			else if (data.char_buff[0] == DELETE && data.cursor_pos != 0)
 				delete(&data);
 			else if (data.char_buff[0] == 27)
-				move_cursor(&data/*, &history*/);
+				move_cursor(&data, &history);
 			ft_bzero((void*)data.char_buff, 5);
 		}
 		if (data.line_buff[0] != '\0')
